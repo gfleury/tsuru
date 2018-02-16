@@ -884,18 +884,30 @@ func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *e
 }
 
 func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *event.Event) (string, error) {
-	imageID, err := image.GetAppImageBySuffix(a.GetName(), imageID)
+	client, err := clusterForPool(a.GetPool())
 	if err != nil {
 		return "", err
 	}
-	imgMetaData, err := image.GetImageMetaData(imageID)
+	foundImageID, err := image.GetAppImageBySuffix(a.GetName(), imageID)
+	if err != nil {
+		return "", err
+	}
+	imgMetaData, err := image.GetImageMetaData(foundImageID)
 	if err != nil {
 		return "", err
 	}
 	if imgMetaData.DisableRollback {
-		return "", fmt.Errorf("Can't Rollback image %s, reason: %s", imageID, imgMetaData.Reason)
+		return "", fmt.Errorf("Can't Rollback image %s, reason: %s", foundImageID, imgMetaData.Reason)
 	}
-	return p.ImageDeploy(a, imageID, evt)
+	manager := &serviceManager{
+		client: client,
+		writer: evt,
+	}
+	err = servicecommon.RunServicePipeline(manager, a, foundImageID, nil)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	return imageID, nil
 }
 
 func (p *kubernetesProvisioner) UpgradeNodeContainer(name string, pool string, writer io.Writer) error {

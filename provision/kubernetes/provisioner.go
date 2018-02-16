@@ -883,6 +883,21 @@ func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *e
 	return imageID, nil
 }
 
+func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *event.Event) (string, error) {
+	imageID, err := image.GetAppImageBySuffix(a.GetName(), imageID)
+	if err != nil {
+		return "", err
+	}
+	imgMetaData, err := image.GetImageMetaData(imageID)
+	if err != nil {
+		return "", err
+	}
+	if imgMetaData.DisableRollback {
+		return "", fmt.Errorf("Can't Rollback image %s, reason: %s", imageID, imgMetaData.Reason)
+	}
+	return p.ImageDeploy(a, imageID, evt)
+}
+
 func (p *kubernetesProvisioner) UpgradeNodeContainer(name string, pool string, writer io.Writer) error {
 	m := nodeContainerManager{}
 	return servicecommon.UpgradeNodeContainer(&m, name, pool, writer)

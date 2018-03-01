@@ -119,6 +119,7 @@ binaries: tsurud
 tsurud: $(TSR_BIN)
 
 $(TSR_BIN):
+	rm -f build/tsurud
 	CGO_ENABLED=0 go build -a -installsuffix cgo -o $(TSR_BIN) $(TSR_SRC)
 
 run-tsurud-api: $(TSR_BIN)

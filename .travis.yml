@@ -8,6 +8,7 @@ addons:
       - xmlsec1
       - rpm
 # test stage automatically added for each go version
+go_import_path: github.com/tsuru/tsuru
 go:
   - 1.10.x
   - master

@@ -1,9 +1,10 @@
 package provision
 
 type CronjobProvisioner interface {
-	GetCronjobs(appName string) ([]CronJob, error)
-	DeleteCronjob(appName, jobName string) error
-	AddCronjob(appName string, jobSpec CronJob) error
+	GetCronjobs(a App) ([]CronJob, error)
+	DeleteCronjob(a App, jobName string) error
+	AddCronjob(a App, jobSpec CronJob) error
+	UpdateCronjob(a App, jobName string, cronJob CronJob) error
 }
 
 type CronJob struct {

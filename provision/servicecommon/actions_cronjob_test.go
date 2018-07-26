@@ -2,19 +2,12 @@ package servicecommon
 
 import (
 	"context"
-	//"testing"
 
 	"github.com/pkg/errors"
-	//"github.com/tsuru/config"
 	"github.com/tsuru/tsuru/action"
-	//"github.com/tsuru/tsuru/app"
 	"github.com/tsuru/tsuru/app/image"
-	//"github.com/tsuru/tsuru/db"
-	//"github.com/tsuru/tsuru/db/dbtest"
 	"github.com/tsuru/tsuru/provision"
 	"github.com/tsuru/tsuru/provision/provisiontest"
-	//servicemock "github.com/tsuru/tsuru/servicemanager/mock"
-	//appTypes "github.com/tsuru/tsuru/types/app"
 	"gopkg.in/check.v1"
 )
 

@@ -104,13 +104,6 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v2alpha1.CronJob, a pro
 	}
 	cronjobName := cronJobNameForApp(a, jobSpec.Name)
 
-	//yamlData, err := image.GetImageTsuruYamlData(imageName)
-	//if err != nil {
-	//	return nil, nil, nil, errors.WithStack(err)
-	//}
-
-	//maxSurge := intstr.FromString("100%")
-	//maxUnavailable := intstr.FromInt(0)
 	nodeSelector := provision.NodeLabels(provision.NodeLabelsOpts{
 		Pool:   a.GetPool(),
 		Prefix: tsuruLabelPrefix,

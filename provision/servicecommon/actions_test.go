@@ -84,6 +84,7 @@ type recordManager struct {
 	removeErrMap map[string]error
 	lastLabels   map[string]*provision.LabelSet
 	calls        []managerCall
+	cronCalls    []cronjobManagerCall
 }
 
 func (m *recordManager) reset() {

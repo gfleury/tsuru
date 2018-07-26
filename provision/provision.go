@@ -675,6 +675,7 @@ func (e *Error) Error() string {
 type TsuruYamlData struct {
 	Hooks       TsuruYamlHooks       `bson:",omitempty"`
 	Healthcheck TsuruYamlHealthcheck `bson:",omitempty"`
+	Cronjobs    []CronJob            `bson:",omitempty"`
 }
 
 type TsuruYamlHooks struct {

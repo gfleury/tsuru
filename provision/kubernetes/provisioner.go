@@ -803,6 +803,14 @@ func (p *kubernetesProvisioner) Deploy(a provision.App, buildImageID string, evt
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
+	cronjobManager := &cronjobManager{
+		client: client,
+		writer: evt,
+	}
+	err = servicecommon.RunCronjobPipeline(cronjobManager, a, newImage, nil, evt)
+	if err != nil {
+		return newImage, errors.WithStack(err)
+	}
 	return newImage, ensureAppCustomResourceSynced(client, a)
 }
 
@@ -829,6 +837,14 @@ func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *e
 	err = servicecommon.RunServicePipeline(manager, a, foundImageID, nil, evt)
 	if err != nil {
 		return "", errors.WithStack(err)
+	}
+	cronjobManager := &cronjobManager{
+		client: client,
+		writer: evt,
+	}
+	err = servicecommon.RunCronjobPipeline(cronjobManager, a, foundImageID, nil, evt)
+	if err != nil {
+		return imageID, errors.WithStack(err)
 	}
 	return imageID, nil
 }

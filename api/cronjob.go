@@ -222,7 +222,7 @@ func updateCronjob(w http.ResponseWriter, r *http.Request, t auth.Token) (err er
 	}
 	defer func() { evt.Done(err) }()
 
-	name, err := a.UpdateCronjob(&cronjob)
+	name, err := a.UpdateCronjob(cronjob)
 	if err != nil {
 		return err
 	}

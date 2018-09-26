@@ -19,7 +19,7 @@ func (app *App) DeleteCronjobs(name string) error {
 	return nil
 }
 
-func (app *App) UpdateCronjob(provision.CronJob) error {
+func (app *App) UpdateCronjob(cron provision.CronJob) (string, error) {
 
-	return nil
+	return cron.Name, nil
 }

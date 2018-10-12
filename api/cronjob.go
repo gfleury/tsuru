@@ -1,23 +1,14 @@
 package api
 
 import (
-	//"fmt"
-	//"io"
-	//"mime/multipart"
-	"net/http"
-	//"strconv"
-	//"strings"
 	"encoding/json"
-	//"time"
+	"net/http"
 
 	"github.com/ajg/form"
-
-	//"github.com/tsuru/tsuru/app"
 	"github.com/tsuru/tsuru/auth"
 	"github.com/tsuru/tsuru/errors"
 	tsuruErrors "github.com/tsuru/tsuru/errors"
 	"github.com/tsuru/tsuru/event"
-	//tsuruIo "github.com/tsuru/tsuru/io"
 	"github.com/tsuru/tsuru/permission"
 	"github.com/tsuru/tsuru/provision"
 )

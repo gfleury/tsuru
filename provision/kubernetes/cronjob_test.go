@@ -94,7 +94,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 							Volumes:        []apiv1.Volume(nil),
 							InitContainers: []apiv1.Container(nil),
 							Containers: []apiv1.Container{
-								apiv1.Container{
+								{
 									Name:  "myapp-p1",
 									Image: "myimg",
 									Command: []string{
@@ -107,11 +107,11 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 									Ports:      []apiv1.ContainerPort(nil),
 									EnvFrom:    []apiv1.EnvFromSource(nil),
 									Env: []apiv1.EnvVar{
-										apiv1.EnvVar{Name: "TSURU_SERVICES", Value: "{}"},
-										apiv1.EnvVar{Name: "TSURU_PROCESSNAME", Value: "p1"},
-										apiv1.EnvVar{Name: "TSURU_HOST", Value: ""},
-										apiv1.EnvVar{Name: "port", Value: "8888"},
-										apiv1.EnvVar{Name: "PORT", Value: "8888"},
+										{Name: "TSURU_SERVICES", Value: "{}"},
+										{Name: "TSURU_PROCESSNAME", Value: "p1"},
+										{Name: "TSURU_HOST", Value: ""},
+										{Name: "port", Value: "8888"},
+										{Name: "PORT", Value: "8888"},
 									},
 									Resources: apiv1.ResourceRequirements{
 										Limits: apiv1.ResourceList{}, Requests: apiv1.ResourceList{},
@@ -415,7 +415,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithVolumes(c *check.C) {
 		Pool:      "test-default",
 		TeamOwner: "admin",
 	}
-	err = v.Save()
+	err = v.Create()
 	c.Assert(err, check.IsNil)
 	err = v.BindApp(a.GetName(), "/mnt", false)
 	c.Assert(err, check.IsNil)

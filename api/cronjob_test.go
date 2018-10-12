@@ -27,6 +27,7 @@ import (
 	_ "github.com/tsuru/tsuru/storage/mongodb"
 	appTypes "github.com/tsuru/tsuru/types/app"
 	authTypes "github.com/tsuru/tsuru/types/auth"
+	permTypes "github.com/tsuru/tsuru/types/permission"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/check.v1"
 )
@@ -53,13 +54,13 @@ func (s *CronjobSuite) createUserAndTeam(c *check.C) {
 	s.team = &authTypes.Team{Name: "tsuruteam"}
 	s.token = userWithPermission(c, permission.Permission{
 		Scheme:  permission.PermAppReadDeploy,
-		Context: permission.Context(permission.CtxTeam, s.team.Name),
+		Context: permission.Context(permTypes.CtxTeam, s.team.Name),
 	}, permission.Permission{
 		Scheme:  permission.PermAppDeploy,
-		Context: permission.Context(permission.CtxTeam, s.team.Name),
+		Context: permission.Context(permTypes.CtxTeam, s.team.Name),
 	}, permission.Permission{
 		Scheme:  permission.PermAppBuild,
-		Context: permission.Context(permission.CtxTeam, s.team.Name),
+		Context: permission.Context(permTypes.CtxTeam, s.team.Name),
 	})
 }
 

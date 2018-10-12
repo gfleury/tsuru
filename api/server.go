@@ -240,6 +240,11 @@ func RunServer(dry bool) http.Handler {
 	m.Add("1.2", "Put", "/apps/{app}/certificate", AuthorizationRequiredHandler(setCertificate))
 	m.Add("1.2", "Delete", "/apps/{app}/certificate", AuthorizationRequiredHandler(unsetCertificate))
 
+	m.Add("1.7", "Post", "/apps/{appname}/cronjobs", AuthorizationRequiredHandler(addCronjob))
+	m.Add("1.7", "Get", "/apps/{appname}/cronjobs", AuthorizationRequiredHandler(listCronjobs))
+	m.Add("1.7", "Delete", "/apps/{appname}/cronjobs/{cronjob}", AuthorizationRequiredHandler(deleteCronjob))
+	m.Add("1.7", "Put", "/apps/{appname}/cronjobs/{cronjob}", AuthorizationRequiredHandler(updateCronjob))
+
 	m.Add("1.5", "Post", "/apps/{app}/routers", AuthorizationRequiredHandler(addAppRouter))
 	m.Add("1.5", "Put", "/apps/{app}/routers/{router}", AuthorizationRequiredHandler(updateAppRouter))
 	m.Add("1.5", "Delete", "/apps/{app}/routers/{router}", AuthorizationRequiredHandler(removeAppRouter))

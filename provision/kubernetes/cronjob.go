@@ -12,7 +12,7 @@ import (
 	"github.com/tsuru/tsuru/provision/dockercommon"
 	"github.com/tsuru/tsuru/provision/servicecommon"
 	batchv1 "k8s.io/api/batch/v1"
-	v2alpha1 "k8s.io/api/batch/v2alpha1"
+	v1beta1 "k8s.io/api/batch/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,7 +33,7 @@ func (m *cronjobManager) RemoveCronjob(a provision.App, jobName string) error {
 	}
 	multiErrors := tsuruErrors.NewMultiError()
 	cronjobName := cronJobNameForApp(a, jobName)
-	err = m.client.BatchV2alpha1().CronJobs(ns).Delete(cronjobName, &metav1.DeleteOptions{
+	err = m.client.BatchV1beta1().CronJobs(ns).Delete(cronjobName, &metav1.DeleteOptions{
 		PropagationPolicy: propagationPtr(metav1.DeletePropagationForeground),
 	})
 	if err != nil && !k8sErrors.IsNotFound(err) {
@@ -64,7 +64,7 @@ func (m *cronjobManager) DeployCronjob(ctx context.Context, a provision.App, job
 	if err != nil {
 		return err
 	}
-	oldCronjob, err := m.client.BatchV2alpha1().CronJobs(ns).Get(cronjobName, metav1.GetOptions{})
+	oldCronjob, err := m.client.BatchV1beta1().CronJobs(ns).Get(cronjobName, metav1.GetOptions{})
 	if err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			return errors.WithStack(err)
@@ -86,7 +86,7 @@ func cronJobNameForApp(a provision.App, jobName string) string {
 	return fmt.Sprintf("%s-%s", name, jobName)
 }
 
-func createAppCronjob(client *ClusterClient, oldCronjob *v2alpha1.CronJob, a provision.App, jobSpec *provision.CronJob, imageName string, labels *provision.LabelSet) (*v2alpha1.CronJob, *provision.LabelSet, *provision.LabelSet, error) {
+func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a provision.App, jobSpec *provision.CronJob, imageName string, labels *provision.LabelSet) (*v1beta1.CronJob, *provision.LabelSet, *provision.LabelSet, error) {
 	provision.ExtendServiceLabels(labels, provision.ServiceLabelExtendedOpts{
 		Provisioner: provisionerName,
 		Prefix:      tsuruLabelPrefix,
@@ -132,19 +132,19 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v2alpha1.CronJob, a pro
 	labels, annotations := provision.SplitServiceLabelsAnnotations(labels)
 	failedJobs := int32(jobSpec.FailedJobsHistoryLimit)
 	successJobs := int32(jobSpec.SuccessfulJobsHistoryLimit)
-	cronjob := v2alpha1.CronJob{
+	cronjob := v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        cronjobName,
 			Namespace:   ns,
 			Labels:      labels.WithoutAppReplicas().ToLabels(),
 			Annotations: annotations.ToLabels(),
 		},
-		Spec: v2alpha1.CronJobSpec{
+		Spec: v1beta1.CronJobSpec{
 			Schedule:                   jobSpec.Schedule,
-			ConcurrencyPolicy:          v2alpha1.ConcurrencyPolicy(jobSpec.ConcurrencyPolicy),
+			ConcurrencyPolicy:          v1beta1.ConcurrencyPolicy(jobSpec.ConcurrencyPolicy),
 			FailedJobsHistoryLimit:     &failedJobs,
 			SuccessfulJobsHistoryLimit: &successJobs,
-			JobTemplate: v2alpha1.JobTemplateSpec{
+			JobTemplate: v1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels.WithoutAppReplicas().ToLabels(),
 					Annotations: annotations.ToLabels(),
@@ -157,7 +157,7 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v2alpha1.CronJob, a pro
 							SecurityContext: &apiv1.PodSecurityContext{
 								RunAsUser: uid,
 							},
-							RestartPolicy: apiv1.RestartPolicyAlways,
+							RestartPolicy: apiv1.RestartPolicyOnFailure,
 							NodeSelector:  nodeSelector,
 							Volumes:       volumes,
 							//Subdomain:     headlessServiceNameForApp(a, process),
@@ -186,11 +186,11 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v2alpha1.CronJob, a pro
 			},
 		},
 	}
-	var newCronjob *v2alpha1.CronJob
+	var newCronjob *v1beta1.CronJob
 	if oldCronjob == nil {
-		newCronjob, err = client.BatchV2alpha1().CronJobs(ns).Create(&cronjob)
+		newCronjob, err = client.BatchV1beta1().CronJobs(ns).Create(&cronjob)
 	} else {
-		newCronjob, err = client.BatchV2alpha1().CronJobs(ns).Update(&cronjob)
+		newCronjob, err = client.BatchV1beta1().CronJobs(ns).Update(&cronjob)
 	}
 	return newCronjob, labels, annotations, errors.WithStack(err)
 }

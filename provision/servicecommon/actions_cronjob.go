@@ -2,6 +2,7 @@ package servicecommon
 
 import (
 	"context"
+	"regexp"
 	"sort"
 
 	//"github.com/pkg/errors"
@@ -32,7 +33,7 @@ type CronjobManager interface {
 }
 
 func RunCronjobPipeline(manager CronjobManager, a provision.App, newImg string, updateSpec CronjobSpec, evt *event.Event) error {
-	curImg, err := image.AppCurrentImageName(a.GetName())
+	curImg, err := image.AppPreviousImageName(a.GetName())
 	if err != nil {
 		return err
 	}
@@ -89,6 +90,8 @@ func rollbackAddedCronjobs(args *pipelineCronjobsArgs, cronjobs []string) {
 	}
 }
 
+var kubeNameRegex = regexp.MustCompile(`(?i)[^a-z0-9.-]`)
+
 func labelsForCronjobs(args *pipelineCronjobsArgs, cronjobName string, pState provision.CronJob) (*provision.LabelSet, error) {
 	//oldLabels, err := args.manager.CurrentLabels(args.app, cronjobName)
 	//if err != nil {
@@ -96,7 +99,7 @@ func labelsForCronjobs(args *pipelineCronjobsArgs, cronjobName string, pState pr
 	//}
 	labels, err := provision.ServiceLabels(provision.ServiceLabelsOpts{
 		App:     args.app,
-		Process: cronjobName,
+		Process: kubeNameRegex.ReplaceAllString(cronjobName, "-"),
 	})
 	if err != nil {
 		return nil, err

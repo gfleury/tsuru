@@ -13,7 +13,7 @@ import (
 	"github.com/tsuru/tsuru/volume"
 	"gopkg.in/check.v1"
 	batchv1 "k8s.io/api/batch/v1"
-	v2alpha1 "k8s.io/api/batch/v2alpha1"
+	v1beta1 "k8s.io/api/batch/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +43,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	depLabels := map[string]string{
 		"tsuru.io/is-tsuru":        "true",
@@ -75,15 +75,15 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 	dep.Spec.SuccessfulJobsHistoryLimit = nil
 	dep.Spec.FailedJobsHistoryLimit = nil
 	dep.Spec.JobTemplate.Spec.Template.Spec.SecurityContext = nil
-	c.Assert(dep, check.DeepEquals, &v2alpha1.CronJob{
+	c.Assert(dep, check.DeepEquals, &v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "myapp-p1",
 			Namespace:   "default",
 			Labels:      depLabels,
 			Annotations: annotations,
 		},
-		Spec: v2alpha1.CronJobSpec{
-			JobTemplate: v2alpha1.JobTemplateSpec{
+		Spec: v1beta1.CronJobSpec{
+			JobTemplate: v1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      depLabels,
 					Annotations: annotations,
@@ -126,7 +126,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 									TTY:            false,
 								},
 							},
-							RestartPolicy:      "Always",
+							RestartPolicy:      "OnFailure",
 							NodeSelector:       map[string]string{"tsuru.io/pool": "test-default"},
 							ServiceAccountName: "app-myapp",
 							ImagePullSecrets:   []apiv1.LocalObjectReference(nil),
@@ -217,7 +217,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithRegistryAuth(c *check.C) {
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-web", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-web", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	c.Assert(dep.Spec.JobTemplate.Spec.Template.Spec.ImagePullSecrets, check.DeepEquals, []apiv1.LocalObjectReference{
 		{Name: "registry-myreg.com"},
@@ -262,7 +262,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithUID(c *check.C) {
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	expectedUID := int64(1001)
 	c.Assert(dep.Spec.JobTemplate.Spec.Template.Spec.SecurityContext, check.DeepEquals, &apiv1.PodSecurityContext{
@@ -293,7 +293,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithResourceRequirements(c *check.C) 
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	expectedMemory := resource.NewQuantity(1024, resource.BinarySI)
 	c.Assert(dep.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Resources, check.DeepEquals, apiv1.ResourceRequirements{
@@ -330,7 +330,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithClusterWideOvercommitFactor(c *ch
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	expectedMemory := resource.NewQuantity(1024, resource.BinarySI)
 	expectedMemoryRequest := resource.NewQuantity(341, resource.BinarySI)
@@ -369,7 +369,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithClusterPoolOvercommitFactor(c *ch
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	expectedMemory := resource.NewQuantity(1024, resource.BinarySI)
 	expectedMemoryRequest := resource.NewQuantity(512, resource.BinarySI)
@@ -425,7 +425,7 @@ func (s *S) TestCronjobManagerDeployCronjobWithVolumes(c *check.C) {
 	c.Assert(err, check.IsNil)
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	dep, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
+	dep, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).Get("myapp-p1", metav1.GetOptions{})
 	c.Assert(err, check.IsNil)
 	c.Assert(dep.Spec.JobTemplate.Spec.Template.Spec.Volumes, check.DeepEquals, []apiv1.Volume{
 		{
@@ -466,7 +466,7 @@ func (s *S) TestCronjobManagerRemoveService(c *check.C) {
 	c.Assert(err, check.IsNil)
 	err = m.RemoveCronjob(a, "p1")
 	c.Assert(err, check.IsNil)
-	deps, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).List(metav1.ListOptions{})
+	deps, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).List(metav1.ListOptions{})
 	c.Assert(err, check.IsNil)
 	c.Assert(deps.Items, check.HasLen, 0)
 	srvs, err := s.client.CoreV1().Services(ns).List(metav1.ListOptions{})
@@ -502,7 +502,7 @@ func (s *S) TestCronjobManagerRemoveServiceMiddleFailure(c *check.C) {
 	c.Assert(err, check.ErrorMatches, "(?s).*my dep err.*")
 	ns, err := s.client.AppNamespace(a)
 	c.Assert(err, check.IsNil)
-	deps, err := s.client.Clientset.BatchV2alpha1().CronJobs(ns).List(metav1.ListOptions{})
+	deps, err := s.client.Clientset.BatchV1beta1().CronJobs(ns).List(metav1.ListOptions{})
 	c.Assert(err, check.IsNil)
 	c.Assert(deps.Items, check.HasLen, 1)
 }

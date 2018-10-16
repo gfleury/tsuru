@@ -7,7 +7,7 @@ import (
 	"github.com/tsuru/tsuru/app/image"
 	"github.com/tsuru/tsuru/provision"
 
-	v2alpha1 "k8s.io/api/batch/v2alpha1"
+	v2alpha1 "k8s.io/api/batch/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	//"github.com/tsuru/tsuru/provision/servicecommon"
@@ -39,7 +39,7 @@ func (p *kubernetesProvisioner) GetCronjobs(a provision.App) ([]provision.CronJo
 	if err != nil {
 		return nil, err
 	}
-	cronJobs, err := client.BatchV2alpha1().CronJobs(ns).List(metav1.ListOptions{
+	cronJobs, err := client.BatchV1beta1().CronJobs(ns).List(metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(labels.Set(ls.WithoutAppReplicas().ToSelector())).String(),
 	})
 	if err != nil {
@@ -73,7 +73,7 @@ func (p *kubernetesProvisioner) DeleteCronjob(a provision.App, jobName string) e
 	if err != nil {
 		return err
 	}
-	return client.BatchV2alpha1().CronJobs(ns).Delete(cronJobNameForApp(a, jobName), &metav1.DeleteOptions{
+	return client.BatchV1beta1().CronJobs(ns).Delete(cronJobNameForApp(a, jobName), &metav1.DeleteOptions{
 		PropagationPolicy: propagationPtr(metav1.DeletePropagationForeground),
 	})
 }
@@ -122,7 +122,7 @@ func (p *kubernetesProvisioner) UpdateCronjob(a provision.App, jobName string, c
 	if err != nil {
 		return err
 	}
-	oldCronJob, err := client.BatchV2alpha1().CronJobs(ns).Get(cronJobNameForApp(a, jobName), metav1.GetOptions{})
+	oldCronJob, err := client.BatchV1beta1().CronJobs(ns).Get(cronJobNameForApp(a, jobName), metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (p *kubernetesProvisioner) UpdateCronjob(a provision.App, jobName string, c
 
 	oldCronJob.Spec.Suspend = &cronJob.Suspend
 
-	_, err = client.BatchV2alpha1().CronJobs(ns).Update(oldCronJob)
+	_, err = client.BatchV1beta1().CronJobs(ns).Update(oldCronJob)
 
 	return err
 }

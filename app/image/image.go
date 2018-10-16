@@ -276,8 +276,11 @@ func AppPreviousImageName(appName string) (string, error) {
 		log.Errorf("Couldn't find valid images for app %q", appName)
 		return appBasicImageName(appName), nil
 	}
-	if len(imgs.Images) <= 1 {
+	if len(imgs.Images) == 0 {
 		return "", ErrNoImagesAvailable
+	}
+	if len(imgs.Images) == 1 {
+		return imgs.Images[len(imgs.Images)-1], nil
 	}
 	return imgs.Images[len(imgs.Images)-2], nil
 }

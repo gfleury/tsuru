@@ -144,6 +144,7 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a prov
 			ConcurrencyPolicy:          v1beta1.ConcurrencyPolicy(jobSpec.ConcurrencyPolicy),
 			FailedJobsHistoryLimit:     &failedJobs,
 			SuccessfulJobsHistoryLimit: &successJobs,
+			Suspend:                    &jobSpec.Suspend,
 			JobTemplate: v1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels.WithoutAppReplicas().ToLabels(),

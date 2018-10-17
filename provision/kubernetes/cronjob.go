@@ -47,7 +47,7 @@ func (m *cronjobManager) CurrentLabels(a provision.App, processName string) (*pr
 }
 
 func (m *cronjobManager) DeployCronjob(ctx context.Context, a provision.App, jobSpec *provision.CronJob, labels *provision.LabelSet, image string) error {
-	err := ensureNodeContainers()
+	err := ensureNodeContainers(a)
 	if err != nil {
 		return err
 	}

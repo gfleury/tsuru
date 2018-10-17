@@ -79,7 +79,7 @@ func (p *kubernetesProvisioner) DeleteCronjob(a provision.App, jobName string) e
 }
 
 func (p *kubernetesProvisioner) AddCronjob(a provision.App, jobSpec provision.CronJob) error {
-	err := ensureNodeContainers()
+	err := ensureNodeContainers(a)
 	if err != nil {
 		return err
 	}

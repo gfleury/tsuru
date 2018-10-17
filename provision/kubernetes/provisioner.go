@@ -1178,6 +1178,14 @@ func ensureAppCustomResourceSynced(client *ClusterClient, a provision.App) error
 		deployments[p] = append(deployments[p], deploymentNameForApp(a, p))
 		services[p] = append(services[p], deploymentNameForApp(a, p), headlessServiceNameForApp(a, p))
 	}
+	cronjobs := make(map[string][]string)
+	currentImageTsusuYamlData, err := image.GetImageTsuruYamlData(curImg)
+	if err != nil {
+		return err
+	}
+	for _, cronjob := range currentImageTsusuYamlData.Cronjobs {
+		cronjobs[cronjob.Name] = append(cronjobs[cronjob.Name], cronjob.Name)
+	}
 	tclient, err := TsuruClientForConfig(client.restConfig)
 	if err != nil {
 		return err
@@ -1188,6 +1196,7 @@ func ensureAppCustomResourceSynced(client *ClusterClient, a provision.App) error
 	}
 	appCRD.Spec.Services = services
 	appCRD.Spec.Deployments = deployments
+	appCRD.Spec.Cronjobs = cronjobs
 	appCRD.Spec.ServiceAccountName = serviceAccountNameForApp(a)
 	_, err = tclient.TsuruV1().Apps(client.Namespace()).Update(appCRD)
 	return err

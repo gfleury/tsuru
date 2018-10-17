@@ -75,6 +75,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 	dep.Spec.SuccessfulJobsHistoryLimit = nil
 	dep.Spec.FailedJobsHistoryLimit = nil
 	dep.Spec.JobTemplate.Spec.Template.Spec.SecurityContext = nil
+	trueBool = true
 	c.Assert(dep, check.DeepEquals, &v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "myapp-p1",
@@ -83,6 +84,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 			Annotations: annotations,
 		},
 		Spec: v1beta1.CronJobSpec{
+			Suspend: &trueBool,
 			JobTemplate: v1beta1.JobTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      depLabels,

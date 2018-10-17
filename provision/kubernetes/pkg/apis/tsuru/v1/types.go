@@ -25,7 +25,7 @@ type AppSpec struct {
 	ServiceAccountName string              `json:"serviceAccountName"`
 	Deployments        map[string][]string `json:"deployments"`
 	Services           map[string][]string `json:"services"`
-	Cronjobs           map[string][]string `json:"cronjobs"`
+	Cronjobs           []string            `json:"cronjobs"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

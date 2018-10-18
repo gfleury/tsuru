@@ -13,9 +13,9 @@ func (s *S) TestGetCronjobs(c *check.C) {
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
 	err = s.p.AddCronjob(a, provision.CronJob{
-		Command:                "ls -la",
-		ConcurrencyPolicy:      "allow",
-		FailedJobsHistoryLimit: 3,
+		Command:                    "ls -la",
+		ConcurrencyPolicy:          "allow",
+		FailedJobsHistoryLimit:     3,
 		Name:                       "cr1",
 		Schedule:                   "*/1 * * * *",
 		SuccessfulJobsHistoryLimit: 3,
@@ -40,9 +40,9 @@ func (s *S) TestDeleteCronjob(c *check.C) {
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
 	err = s.p.AddCronjob(a, provision.CronJob{
-		Command:                "ls -la",
-		ConcurrencyPolicy:      "allow",
-		FailedJobsHistoryLimit: 3,
+		Command:                    "ls -la",
+		ConcurrencyPolicy:          "allow",
+		FailedJobsHistoryLimit:     3,
 		Name:                       "cr1",
 		Schedule:                   "*/1 * * * *",
 		SuccessfulJobsHistoryLimit: 3,
@@ -61,9 +61,9 @@ func (s *S) TestAddCronjob(c *check.C) {
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
 	err = s.p.AddCronjob(a, provision.CronJob{
-		Command:                "ls -la",
-		ConcurrencyPolicy:      "allow",
-		FailedJobsHistoryLimit: 3,
+		Command:                    "ls -la",
+		ConcurrencyPolicy:          "allow",
+		FailedJobsHistoryLimit:     3,
 		Name:                       "cr1",
 		Schedule:                   "*/1 * * * *",
 		SuccessfulJobsHistoryLimit: 3,
@@ -88,9 +88,9 @@ func (s *S) TestUpdateCronjob(c *check.C) {
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
 	err = s.p.AddCronjob(a, provision.CronJob{
-		Command:                "ls -la",
-		ConcurrencyPolicy:      "allow",
-		FailedJobsHistoryLimit: 3,
+		Command:                    "ls -la",
+		ConcurrencyPolicy:          "allow",
+		FailedJobsHistoryLimit:     3,
 		Name:                       "cr1",
 		Schedule:                   "*/1 * * * *",
 		SuccessfulJobsHistoryLimit: 3,

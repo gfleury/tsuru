@@ -1054,6 +1054,7 @@ func (s *S) TestDeploy(c *check.C) {
 		ServiceAccountName: "app-myapp",
 		Deployments:        map[string][]string{"web": {"myapp-web"}},
 		Services:           map[string][]string{"web": {"myapp-web", "myapp-web-units"}},
+		Cronjobs:           []string{},
 	})
 }
 
@@ -1124,6 +1125,7 @@ func (s *S) TestDeployWithPoolNamespaces(c *check.C) {
 		ServiceAccountName: "app-myapp",
 		Deployments:        map[string][]string{"web": {"myapp-web"}},
 		Services:           map[string][]string{"web": {"myapp-web", "myapp-web-units"}},
+		Cronjobs:           []string{},
 	})
 }
 

@@ -3,7 +3,7 @@ package provision
 type CronjobProvisioner interface {
 	GetCronjobs(a App) ([]CronJob, error)
 	DeleteCronjob(a App, jobName string) error
-	AddCronjob(a App, jobSpec CronJob) error
+	AddCronjob(a App, jobSpec CronJob) (string, error)
 	UpdateCronjob(a App, jobName string, cronJob CronJob) error
 }
 

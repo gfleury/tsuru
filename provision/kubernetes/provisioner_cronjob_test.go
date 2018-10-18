@@ -12,7 +12,7 @@ func (s *S) TestGetCronjobs(c *check.C) {
 	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
-	err = s.p.AddCronjob(a, provision.CronJob{
+	_, err = s.p.AddCronjob(a, provision.CronJob{
 		Command:                    "ls -la",
 		ConcurrencyPolicy:          "allow",
 		FailedJobsHistoryLimit:     3,
@@ -39,7 +39,7 @@ func (s *S) TestDeleteCronjob(c *check.C) {
 	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
-	err = s.p.AddCronjob(a, provision.CronJob{
+	_, err = s.p.AddCronjob(a, provision.CronJob{
 		Command:                    "ls -la",
 		ConcurrencyPolicy:          "allow",
 		FailedJobsHistoryLimit:     3,
@@ -60,7 +60,7 @@ func (s *S) TestAddCronjob(c *check.C) {
 	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
-	err = s.p.AddCronjob(a, provision.CronJob{
+	_, err = s.p.AddCronjob(a, provision.CronJob{
 		Command:                    "ls -la",
 		ConcurrencyPolicy:          "allow",
 		FailedJobsHistoryLimit:     3,
@@ -87,7 +87,7 @@ func (s *S) TestUpdateCronjob(c *check.C) {
 	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
-	err = s.p.AddCronjob(a, provision.CronJob{
+	_, err = s.p.AddCronjob(a, provision.CronJob{
 		Command:                    "ls -la",
 		ConcurrencyPolicy:          "allow",
 		FailedJobsHistoryLimit:     3,

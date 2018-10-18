@@ -78,39 +78,42 @@ func (p *kubernetesProvisioner) DeleteCronjob(a provision.App, jobName string) e
 	})
 }
 
-func (p *kubernetesProvisioner) AddCronjob(a provision.App, jobSpec provision.CronJob) error {
+func (p *kubernetesProvisioner) AddCronjob(a provision.App, jobSpec provision.CronJob) (string, error) {
 	err := ensureNodeContainers(a)
 	if err != nil {
-		return err
+		return "", err
 	}
 	client, err := clusterForPool(a.GetPool())
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = ensureNamespaceForApp(client, a)
 	if err != nil {
-		return err
+		return "", err
 	}
 	err = ensureServiceAccountForApp(client, a)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	curImg, err := image.AppCurrentImageName(a.GetName())
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	ls, err := provision.ServiceLabels(provision.ServiceLabelsOpts{
 		App: a,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	_, _, _, err = createAppCronjob(client, nil, a, &jobSpec, curImg, ls.WithoutAppReplicas())
+	newCronjob, _, _, err := createAppCronjob(client, nil, a, &jobSpec, curImg, ls.WithoutAppReplicas())
+	if err != nil {
+		return "", err
+	}
 
-	return err
+	return newCronjob.GetName(), err
 }
 
 func (p *kubernetesProvisioner) UpdateCronjob(a provision.App, jobName string, cronJob provision.CronJob) error {

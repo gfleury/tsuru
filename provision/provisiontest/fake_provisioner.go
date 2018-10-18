@@ -497,8 +497,8 @@ func (p *FakeProvisioner) AddCronjob(a provision.App, jobSpec provision.CronJob)
 func (p *FakeProvisioner) UpdateCronjob(a provision.App, jobName string, cronJob provision.CronJob) error {
 	var kubeNameRegex = regexp.MustCompile(`(?i)[^a-z0-9.-]`)
 	name := strings.ToLower(kubeNameRegex.ReplaceAllString(a.GetName(), "-"))
-	jobName = strings.ToLower(kubeNameRegex.ReplaceAllString(cronJob.Name, "-"))
-	cronJob.Name = fmt.Sprintf("%s-%s", name, jobName)
+	retJobName := strings.ToLower(kubeNameRegex.ReplaceAllString(cronJob.Name, "-"))
+	cronJob.Name = fmt.Sprintf("%s-%s", name, retJobName)
 	return nil
 }
 

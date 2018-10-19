@@ -132,7 +132,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 									TTY:            false,
 								},
 							},
-							RestartPolicy:      "OnFailure",
+							RestartPolicy:      "Never",
 							NodeSelector:       map[string]string{"tsuru.io/pool": "test-default"},
 							ServiceAccountName: "app-myapp",
 							ImagePullSecrets:   []apiv1.LocalObjectReference(nil),

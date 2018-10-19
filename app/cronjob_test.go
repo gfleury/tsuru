@@ -50,7 +50,7 @@ func (s *S) TestUpdateCronjob(c *check.C) {
 	}
 	jobName, err := a.UpdateCronjob(cronjob)
 	c.Assert(err, check.IsNil)
-	c.Assert(jobName, check.Equals, "some-app-fakecron")
+	c.Assert(jobName, check.Equals, "Fakecron")
 }
 
 func (s *S) TestDeleteCronjob(c *check.C) {

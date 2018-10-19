@@ -162,7 +162,7 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a prov
 							SecurityContext: &apiv1.PodSecurityContext{
 								RunAsUser: uid,
 							},
-							RestartPolicy: apiv1.RestartPolicyOnFailure,
+							RestartPolicy: apiv1.RestartPolicyNever,
 							NodeSelector:  nodeSelector,
 							Volumes:       volumes,
 							//Subdomain:     headlessServiceNameForApp(a, process),

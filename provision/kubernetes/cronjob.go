@@ -152,6 +152,10 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a prov
 				},
 				Spec: batchv1.JobSpec{
 					Template: apiv1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels:      labels.WithoutAppReplicas().ToLabels(),
+							Annotations: annotations.ToLabels(),
+						},
 						Spec: apiv1.PodSpec{
 							ImagePullSecrets:   pullSecrets,
 							ServiceAccountName: serviceAccountNameForApp(a),

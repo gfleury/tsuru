@@ -92,6 +92,10 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 				},
 				Spec: batchv1.JobSpec{
 					Template: apiv1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels:      depLabels,
+							Annotations: annotations,
+						},
 						Spec: apiv1.PodSpec{
 							Volumes:        []apiv1.Volume(nil),
 							InitContainers: []apiv1.Container(nil),

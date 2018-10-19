@@ -260,6 +260,31 @@ func AppCurrentImageName(appName string) (string, error) {
 	return imgs.Images[len(imgs.Images)-1], nil
 }
 
+func AppPreviousImageName(appName string) (string, error) {
+	coll, err := appImagesColl()
+	if err != nil {
+		return "", err
+	}
+	defer coll.Close()
+	var imgs appImages
+	err = coll.FindId(appName).One(&imgs)
+	if err != nil {
+		log.Errorf("Couldn't find images for app %q, fallback to old image names. Error: %s", appName, err)
+		return appBasicImageName(appName), nil
+	}
+	if len(imgs.Images) <= 1 && imgs.Count > 1 {
+		log.Errorf("Couldn't find valid images for app %q", appName)
+		return appBasicImageName(appName), nil
+	}
+	if len(imgs.Images) == 0 {
+		return "", ErrNoImagesAvailable
+	}
+	if len(imgs.Images) == 1 {
+		return imgs.Images[len(imgs.Images)-1], nil
+	}
+	return imgs.Images[len(imgs.Images)-2], nil
+}
+
 func AppCurrentImageVersion(appName string) (string, error) {
 	version, err := getAppImageVersion(appName)
 	if err == mgo.ErrNotFound || version == 0 {

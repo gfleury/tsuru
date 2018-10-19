@@ -853,6 +853,14 @@ func (p *kubernetesProvisioner) Deploy(a provision.App, buildImageID string, evt
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
+	cronjobManager := &cronjobManager{
+		client: client,
+		writer: evt,
+	}
+	err = servicecommon.RunCronjobPipeline(cronjobManager, a, newImage, nil, evt)
+	if err != nil {
+		return newImage, errors.WithStack(err)
+	}
 	return newImage, ensureAppCustomResourceSynced(client, a)
 }
 
@@ -879,6 +887,14 @@ func (p *kubernetesProvisioner) Rollback(a provision.App, imageID string, evt *e
 	err = servicecommon.RunServicePipeline(manager, a, foundImageID, nil, evt)
 	if err != nil {
 		return "", errors.WithStack(err)
+	}
+	cronjobManager := &cronjobManager{
+		client: client,
+		writer: evt,
+	}
+	err = servicecommon.RunCronjobPipeline(cronjobManager, a, foundImageID, nil, evt)
+	if err != nil {
+		return imageID, errors.WithStack(err)
 	}
 	return imageID, nil
 }
@@ -1162,6 +1178,14 @@ func ensureAppCustomResourceSynced(client *ClusterClient, a provision.App) error
 		deployments[p] = append(deployments[p], deploymentNameForApp(a, p))
 		services[p] = append(services[p], deploymentNameForApp(a, p), headlessServiceNameForApp(a, p))
 	}
+	currentImageTsusuYamlData, err := image.GetImageTsuruYamlData(curImg)
+	if err != nil {
+		return err
+	}
+	cronjobs := make([]string, len(currentImageTsusuYamlData.Cronjobs))
+	for c, cronjob := range currentImageTsusuYamlData.Cronjobs {
+		cronjobs[c] = cronJobNameForApp(a, cronjob.Name)
+	}
 	tclient, err := TsuruClientForConfig(client.restConfig)
 	if err != nil {
 		return err
@@ -1172,6 +1196,7 @@ func ensureAppCustomResourceSynced(client *ClusterClient, a provision.App) error
 	}
 	appCRD.Spec.Services = services
 	appCRD.Spec.Deployments = deployments
+	appCRD.Spec.Cronjobs = cronjobs
 	appCRD.Spec.ServiceAccountName = serviceAccountNameForApp(a)
 	_, err = tclient.TsuruV1().Apps(client.Namespace()).Update(appCRD)
 	return err

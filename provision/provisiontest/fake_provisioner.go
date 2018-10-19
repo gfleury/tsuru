@@ -9,7 +9,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -37,6 +39,7 @@ var (
 	_ provision.NodeProvisioner      = &FakeProvisioner{}
 	_ provision.UpdatableProvisioner = &FakeProvisioner{}
 	_ provision.Provisioner          = &FakeProvisioner{}
+	_ provision.CronjobProvisioner   = &FakeProvisioner{}
 	_ provision.App                  = &FakeApp{}
 	_ bind.App                       = &FakeApp{}
 )
@@ -474,6 +477,29 @@ func (n *FakeNode) Provisioner() provision.NodeProvisioner {
 func (n *FakeNode) SetHealth(failures int, hasSuccess bool) {
 	n.failures = failures
 	n.hasSuccess = hasSuccess
+}
+
+func (p *FakeProvisioner) GetCronjobs(a provision.App) ([]provision.CronJob, error) {
+	return []provision.CronJob{}, nil
+}
+
+func (p *FakeProvisioner) DeleteCronjob(a provision.App, jobName string) error {
+	return nil
+}
+
+func (p *FakeProvisioner) AddCronjob(a provision.App, jobSpec provision.CronJob) (string, error) {
+	var kubeNameRegex = regexp.MustCompile(`(?i)[^a-z0-9.-]`)
+	name := strings.ToLower(kubeNameRegex.ReplaceAllString(a.GetName(), "-"))
+	jobName := strings.ToLower(kubeNameRegex.ReplaceAllString(jobSpec.Name, "-"))
+	return fmt.Sprintf("%s-%s", name, jobName), nil
+}
+
+func (p *FakeProvisioner) UpdateCronjob(a provision.App, jobName string, cronJob provision.CronJob) error {
+	var kubeNameRegex = regexp.MustCompile(`(?i)[^a-z0-9.-]`)
+	name := strings.ToLower(kubeNameRegex.ReplaceAllString(a.GetName(), "-"))
+	retJobName := strings.ToLower(kubeNameRegex.ReplaceAllString(cronJob.Name, "-"))
+	cronJob.Name = fmt.Sprintf("%s-%s", name, retJobName)
+	return nil
 }
 
 func (p *FakeProvisioner) AddNode(opts provision.AddNodeOptions) error {

@@ -76,6 +76,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 	dep.Spec.FailedJobsHistoryLimit = nil
 	dep.Spec.JobTemplate.Spec.Template.Spec.SecurityContext = nil
 	falseBool := false
+	maxRetry := int32(1)
 	c.Assert(dep, check.DeepEquals, &v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "myapp-p1",
@@ -91,6 +92,7 @@ func (s *S) TestCronjobManagerDeployCronjob(c *check.C) {
 					Annotations: annotations,
 				},
 				Spec: batchv1.JobSpec{
+					BackoffLimit: &maxRetry,
 					Template: apiv1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      depLabels,

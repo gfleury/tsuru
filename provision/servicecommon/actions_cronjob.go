@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"sort"
 
-	//"github.com/pkg/errors"
 	"github.com/tsuru/tsuru/action"
 	"github.com/tsuru/tsuru/app/image"
 	"github.com/tsuru/tsuru/event"

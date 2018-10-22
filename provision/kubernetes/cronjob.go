@@ -132,6 +132,7 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a prov
 	labels, annotations := provision.SplitServiceLabelsAnnotations(labels)
 	failedJobs := int32(jobSpec.FailedJobsHistoryLimit)
 	successJobs := int32(jobSpec.SuccessfulJobsHistoryLimit)
+	maxRetry := int32(1)
 	cronjob := v1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        cronjobName,
@@ -151,6 +152,7 @@ func createAppCronjob(client *ClusterClient, oldCronjob *v1beta1.CronJob, a prov
 					Annotations: annotations.ToLabels(),
 				},
 				Spec: batchv1.JobSpec{
+					BackoffLimit: &maxRetry,
 					Template: apiv1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels:      labels.WithoutAppReplicas().ToLabels(),

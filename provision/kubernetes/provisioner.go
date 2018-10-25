@@ -225,6 +225,14 @@ func (p *kubernetesProvisioner) removeResources(client *ClusterClient, app *tsur
 			}
 		}
 	}
+	for _, c := range app.Spec.Cronjobs {
+		err := client.BatchV1beta1().CronJobs(app.Spec.NamespaceName).Delete(c, &metav1.DeleteOptions{
+			PropagationPolicy: propagationPtr(metav1.DeletePropagationForeground),
+		})
+		if err != nil && !k8sErrors.IsNotFound(err) {
+			multiErrors.Add(err)
+		}
+	}
 	for _, s := range app.Spec.Services {
 		for _, ss := range s {
 			err := client.CoreV1().Services(app.Spec.NamespaceName).Delete(ss, &metav1.DeleteOptions{

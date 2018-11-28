@@ -5,7 +5,7 @@
 Metrics
 =======
 
-Every docker node created on tsuru has a tsuru agent(a.k.a node-container),
+Every docker node created on tsuru has a tsuru agent (a.k.a node-container),
 called big-sibling, running as a container. One of it's responsibilities is
 collecting and reporting metrics, such as cpu and memory usage, from both it's
 host and other applications and containers running on the same host.
@@ -17,7 +17,7 @@ host and other applications and containers running on the same host.
     Overview of all components involved on collecting, ingesting and displaying metrics.
 
 Big-sibling will report metrics to a logstash component, which can be remote or local.
-This logstash must be configured to output metrics elasticsearch, where they will be stored
+This logstash must be configured to output metrics to elasticsearch, where they will be stored
 and where the tsuru dashboard fetches them to display graphics.
 
 The following section will walkthrough the installation and configuration of these components.

@@ -62,14 +62,14 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
 	err := app.CreateApp(a, s.user)
 	c.Assert(err, check.IsNil)
-	err = image.SaveImageCustomData("myimg", map[string]interface{}{
+	err = image.SaveImageCustomData("myimg:v2", map[string]interface{}{
 		"processes": map[string]interface{}{
 			"p1": "cm1",
 			"p2": "cmd2",
 		},
 	})
 	c.Assert(err, check.IsNil)
-	err = servicecommon.RunServicePipeline(&m, a, "myimg", servicecommon.ProcessSpec{
+	err = servicecommon.RunServicePipeline(&m, a, "myimg:v2", servicecommon.ProcessSpec{
 		"p1": servicecommon.ProcessState{Start: true},
 	}, nil)
 	c.Assert(err, check.IsNil)
@@ -98,6 +98,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 		"tsuru.io/provisioner":          "kubernetes",
 		"tsuru.io/builder":              "",
 		"app":                           "myapp-p1",
+		"version":                       "v2",
 	}
 	podLabels := make(map[string]string)
 	for k, v := range depLabels {
@@ -159,7 +160,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 					Containers: []apiv1.Container{
 						{
 							Name:  "myapp-p1",
-							Image: "myimg",
+							Image: "myimg:v2",
 							Command: []string{
 								"/bin/sh",
 								"-lc",
@@ -196,6 +197,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 			Name:      "myapp-p1",
 			Namespace: nsName,
 			Labels: map[string]string{
+				"app":                           "myapp-p1",
 				"tsuru.io/is-tsuru":             "true",
 				"tsuru.io/is-service":           "true",
 				"tsuru.io/is-build":             "false",
@@ -227,6 +229,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 					Protocol:   "TCP",
 					Port:       int32(8888),
 					TargetPort: intstr.FromInt(8888),
+					Name:       "http-default",
 				},
 			},
 			Type: apiv1.ServiceTypeNodePort,
@@ -239,6 +242,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 			Name:      "myapp-p1-units",
 			Namespace: nsName,
 			Labels: map[string]string{
+				"app":                           "myapp-p1",
 				"tsuru.io/is-tsuru":             "true",
 				"tsuru.io/is-service":           "true",
 				"tsuru.io/is-build":             "false",
@@ -271,6 +275,7 @@ func (s *S) TestServiceManagerDeployService(c *check.C) {
 					Protocol:   "TCP",
 					Port:       int32(8888),
 					TargetPort: intstr.FromInt(8888),
+					Name:       "http-headless",
 				},
 			},
 			ClusterIP: "None",
@@ -358,6 +363,7 @@ func (s *S) TestServiceManagerDeployServiceCustomPort(c *check.C) {
 			Name:      "myapp-p1",
 			Namespace: nsName,
 			Labels: map[string]string{
+				"app":                           "myapp-p1",
 				"tsuru.io/is-tsuru":             "true",
 				"tsuru.io/is-service":           "true",
 				"tsuru.io/is-build":             "false",
@@ -389,9 +395,81 @@ func (s *S) TestServiceManagerDeployServiceCustomPort(c *check.C) {
 					Protocol:   "TCP",
 					Port:       int32(8888),
 					TargetPort: intstr.FromInt(7777),
+					Name:       "http-default",
 				},
 			},
 			Type: apiv1.ServiceTypeNodePort,
+		},
+	})
+}
+
+func (s *S) TestServiceManagerDeployServiceCustomHeadlessPort(c *check.C) {
+	config.Set("kubernetes:headless-service-port", 8889)
+	defer config.Unset("kubernetes:headless-service-port")
+	waitDep := s.mock.DeploymentReactions(c)
+	defer waitDep()
+	m := serviceManager{client: s.clusterClient}
+	a := &app.App{Name: "myapp", TeamOwner: s.team.Name}
+	err := app.CreateApp(a, s.user)
+	c.Assert(err, check.IsNil)
+	imgData := image.ImageMetadata{
+		Name:      "myimg",
+		Processes: map[string][]string{"p1": {"cmd1"}},
+	}
+	err = imgData.Save()
+	c.Assert(err, check.IsNil)
+	err = servicecommon.RunServicePipeline(&m, a, "myimg", servicecommon.ProcessSpec{
+		"p1": servicecommon.ProcessState{Start: true},
+	}, nil)
+	c.Assert(err, check.IsNil)
+	waitDep()
+	nsName, err := s.client.AppNamespace(a)
+	c.Assert(err, check.IsNil)
+	srv, err := s.client.CoreV1().Services(nsName).Get("myapp-p1-units", metav1.GetOptions{})
+	c.Assert(err, check.IsNil)
+	c.Assert(srv, check.DeepEquals, &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "myapp-p1-units",
+			Namespace: nsName,
+			Labels: map[string]string{
+				"app":                           "myapp-p1",
+				"tsuru.io/is-tsuru":             "true",
+				"tsuru.io/is-service":           "true",
+				"tsuru.io/is-build":             "false",
+				"tsuru.io/is-stopped":           "false",
+				"tsuru.io/is-deploy":            "false",
+				"tsuru.io/is-isolated-run":      "false",
+				"tsuru.io/is-headless-service":  "true",
+				"tsuru.io/app-name":             "myapp",
+				"tsuru.io/app-process":          "p1",
+				"tsuru.io/app-process-replicas": "1",
+				"tsuru.io/app-platform":         "",
+				"tsuru.io/app-pool":             "test-default",
+				"tsuru.io/provisioner":          "kubernetes",
+				"tsuru.io/builder":              "",
+			},
+			Annotations: map[string]string{
+				"tsuru.io/router-type": "fake",
+				"tsuru.io/router-name": "fake",
+			},
+		},
+		Spec: apiv1.ServiceSpec{
+			Selector: map[string]string{
+				"tsuru.io/app-name":        "myapp",
+				"tsuru.io/app-process":     "p1",
+				"tsuru.io/is-build":        "false",
+				"tsuru.io/is-isolated-run": "false",
+			},
+			Ports: []apiv1.ServicePort{
+				{
+					Protocol:   "TCP",
+					Port:       int32(8889),
+					TargetPort: intstr.FromInt(8888),
+					Name:       "http-headless",
+				},
+			},
+			ClusterIP: "None",
+			Type:      apiv1.ServiceTypeClusterIP,
 		},
 	})
 }

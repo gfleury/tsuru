@@ -299,6 +299,29 @@ func (s *S) TestCreateApp(c *check.C) {
 	c.Assert(err, check.IsNil)
 }
 
+func (s *S) TestCreateAppAlreadyExists(c *check.C) {
+	a := App{
+		Name:      "appname",
+		Platform:  "python",
+		TeamOwner: s.team.Name,
+		Tags:      []string{"", " test a  ", "  ", "test b ", " test a "},
+	}
+	s.mockService.UserQuota.OnInc = func(email string, q int) error {
+		c.Assert(email, check.Equals, s.user.Email)
+		return nil
+	}
+	expectedHost := "localhost"
+	config.Set("host", expectedHost)
+	s.conn.Users().Update(bson.M{"email": s.user.Email}, bson.M{"$set": bson.M{"quota.limit": 1}})
+	config.Set("quota:units-per-app", 3)
+	defer config.Unset("quota:units-per-app")
+	err := CreateApp(&a, s.user)
+	c.Assert(err, check.IsNil)
+	ra := App{Name: "appname", Platform: "python", TeamOwner: s.team.Name, Pool: "invalid"}
+	err = CreateApp(&ra, s.user)
+	c.Assert(err, check.DeepEquals, &appTypes.AppCreationError{App: ra.Name, Err: ErrAppAlreadyExists})
+}
+
 func (s *S) TestCreateAppDefaultPlan(c *check.C) {
 	a := App{
 		Name:      "appname",
@@ -5425,6 +5448,22 @@ func (s *S) TestGetRoutersWithAddrWithStatus(c *check.C) {
 	c.Assert(routers, check.DeepEquals, []appTypes.AppRouter{
 		{Name: "fake", Address: "myapp.fakerouter.com", Type: "fake"},
 		{Name: "mystatus", Address: "myapp.fakerouter.com", Type: "fake-status", Status: "not ready", StatusDetail: "burn"},
+	})
+}
+
+func (s *S) TestGetRoutersIgnoresDuplicatedEntry(c *check.C) {
+	app := App{Name: "myapp", Platform: "go", TeamOwner: s.team.Name}
+	err := CreateApp(&app, s.user)
+	c.Assert(err, check.IsNil)
+	err = app.AddRouter(appTypes.AppRouter{
+		Name: "fake-tls",
+	})
+	c.Assert(err, check.IsNil)
+	app.Router = "fake-tls"
+	routers := app.GetRouters()
+	c.Assert(routers, check.DeepEquals, []appTypes.AppRouter{
+		{Name: "fake"},
+		{Name: "fake-tls"},
 	})
 }
 

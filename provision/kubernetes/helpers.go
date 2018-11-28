@@ -36,12 +36,14 @@ import (
 )
 
 const (
-	tsuruLabelPrefix       = "tsuru.io/"
-	tsuruInProgressTaint   = tsuruLabelPrefix + "inprogress"
-	tsuruNodeDisabledTaint = tsuruLabelPrefix + "disabled"
-	replicaDepRevision     = "deployment.kubernetes.io/revision"
-	kubeKindReplicaSet     = "ReplicaSet"
-	kubeLabelNameMaxLen    = 55
+	tsuruLabelPrefix          = "tsuru.io/"
+	tsuruInProgressTaint      = tsuruLabelPrefix + "inprogress"
+	tsuruNodeDisabledTaint    = tsuruLabelPrefix + "disabled"
+	tsuruExtraLabelsMeta      = tsuruLabelPrefix + "extra-labels"
+	tsuruExtraAnnotationsMeta = tsuruLabelPrefix + "extra-annotations"
+	replicaDepRevision        = "deployment.kubernetes.io/revision"
+	kubeKindReplicaSet        = "ReplicaSet"
+	kubeLabelNameMaxLen       = 55
 )
 
 var kubeNameRegex = regexp.MustCompile(`(?i)[^a-z0-9.-]`)
@@ -541,6 +543,7 @@ var _ remotecommand.TerminalSizeQueue = &fixedSizeQueue{}
 type execOpts struct {
 	client   *ClusterClient
 	app      provision.App
+	image    string
 	unit     string
 	cmds     []string
 	stdout   io.Writer

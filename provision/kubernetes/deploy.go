@@ -307,11 +307,15 @@ func createPod(ctx context.Context, params createPodParams) error {
 	if err != nil {
 		return err
 	}
+	events, err := params.client.CoreV1().Events(ns).List(listOptsForPodEvent(params.podName))
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	_, err = params.client.CoreV1().Pods(ns).Create(params.pod)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	watch, err := filteredPodEvents(params.client, "", params.podName, ns)
+	watch, err := filteredPodEvents(params.client, events.ResourceVersion, params.podName, ns)
 	if err != nil {
 		return err
 	}
@@ -588,6 +592,9 @@ func createAppDeployment(client *ClusterClient, oldDeployment *v1beta2.Deploymen
 	rawAppLabel := appLabelForApp(a, process)
 	expandedLabels["app"] = rawAppLabel
 	expandedLabelsNoReplicas["app"] = rawAppLabel
+	_, tag := image.SplitImageName(imageName)
+	expandedLabels["version"] = tag
+	expandedLabelsNoReplicas["version"] = tag
 	deployment := v1beta2.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        depName,
@@ -731,21 +738,26 @@ func filteredPodEvents(client *ClusterClient, evtResourceVersion, podName, names
 	if err != nil {
 		return nil, err
 	}
+	opts := listOptsForPodEvent(podName)
+	opts.Watch = true
+	opts.ResourceVersion = evtResourceVersion
+	evtWatch, err := client.CoreV1().Events(namespace).Watch(opts)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return evtWatch, nil
+}
+
+func listOptsForPodEvent(podName string) metav1.ListOptions {
 	selector := map[string]string{
 		"involvedObject.kind": "Pod",
 	}
 	if podName != "" {
 		selector["involvedObject.name"] = podName
 	}
-	evtWatch, err := client.CoreV1().Events(namespace).Watch(metav1.ListOptions{
-		FieldSelector:   labels.SelectorFromSet(labels.Set(selector)).String(),
-		Watch:           true,
-		ResourceVersion: evtResourceVersion,
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
+	return metav1.ListOptions{
+		FieldSelector: labels.SelectorFromSet(labels.Set(selector)).String(),
 	}
-	return evtWatch, nil
 }
 
 func isDeploymentEvent(msg watch.Event, dep *v1beta2.Deployment) bool {
@@ -911,7 +923,7 @@ func (m *serviceManager) DeployService(ctx context.Context, a provision.App, pro
 	if oldDep != nil {
 		oldRevision = oldDep.Annotations[replicaDepRevision]
 	}
-	events, err := m.client.CoreV1().Events(ns).List(metav1.ListOptions{})
+	events, err := m.client.CoreV1().Events(ns).List(listOptsForPodEvent(""))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -946,13 +958,19 @@ func (m *serviceManager) DeployService(ctx context.Context, a provision.App, pro
 		}
 		return provision.ErrUnitStartup{Err: err}
 	}
+	expandedLabels := labels.ToLabels()
+	labels.SetIsHeadlessService()
+	expandedLabelsHeadless := labels.ToLabels()
+	rawAppLabel := appLabelForApp(a, process)
+	expandedLabels["app"] = rawAppLabel
+	expandedLabelsHeadless["app"] = rawAppLabel
 	targetPort := getTargetPortForImage(img)
 	port, _ := strconv.Atoi(provision.WebProcessDefaultPort())
-	_, err = m.client.CoreV1().Services(ns).Create(&apiv1.Service{
+	svc := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        depName,
 			Namespace:   ns,
-			Labels:      labels.ToLabels(),
+			Labels:      expandedLabels,
 			Annotations: annotations.ToLabels(),
 		},
 		Spec: apiv1.ServiceSpec{
@@ -962,20 +980,30 @@ func (m *serviceManager) DeployService(ctx context.Context, a provision.App, pro
 					Protocol:   "TCP",
 					Port:       int32(port),
 					TargetPort: intstr.FromInt(targetPort),
+					Name:       "http-default",
 				},
 			},
 			Type: apiv1.ServiceTypeNodePort,
 		},
-	})
-	if err != nil && !k8sErrors.IsAlreadyExists(err) {
+	}
+	svc, isNew, err := mergeServices(m.client, svc)
+	if err != nil {
+		return err
+	}
+	if isNew {
+		_, err = m.client.CoreV1().Services(ns).Create(svc)
+	} else {
+		_, err = m.client.CoreV1().Services(ns).Update(svc)
+	}
+	if err != nil {
 		return errors.WithStack(err)
 	}
-	labels.SetIsHeadlessService()
-	_, err = m.client.CoreV1().Services(ns).Create(&apiv1.Service{
+	kubeConf := getKubeConfig()
+	headlessSvc := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        headlessServiceNameForApp(a, process),
 			Namespace:   ns,
-			Labels:      labels.ToLabels(),
+			Labels:      expandedLabelsHeadless,
 			Annotations: annotations.ToLabels(),
 		},
 		Spec: apiv1.ServiceSpec{
@@ -983,18 +1011,44 @@ func (m *serviceManager) DeployService(ctx context.Context, a provision.App, pro
 			Ports: []apiv1.ServicePort{
 				{
 					Protocol:   "TCP",
-					Port:       int32(port),
+					Port:       int32(kubeConf.HeadlessServicePort),
 					TargetPort: intstr.FromInt(targetPort),
+					Name:       "http-headless",
 				},
 			},
 			ClusterIP: "None",
 			Type:      apiv1.ServiceTypeClusterIP,
 		},
-	})
-	if err != nil && !k8sErrors.IsAlreadyExists(err) {
+	}
+	headlessSvc, isNew, err = mergeServices(m.client, headlessSvc)
+	if err != nil {
+		return err
+	}
+	if isNew {
+		_, err = m.client.CoreV1().Services(ns).Create(headlessSvc)
+	} else {
+		_, err = m.client.CoreV1().Services(ns).Update(headlessSvc)
+	}
+	if err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+func mergeServices(client *ClusterClient, svc *apiv1.Service) (*apiv1.Service, bool, error) {
+	existing, err := client.CoreV1().Services(svc.Namespace).Get(svc.Name, metav1.GetOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return svc, true, nil
+		}
+		return nil, false, errors.WithStack(err)
+	}
+	for i := 0; i < len(svc.Spec.Ports) && i < len(existing.Spec.Ports); i++ {
+		svc.Spec.Ports[i].NodePort = existing.Spec.Ports[i].NodePort
+	}
+	svc.ObjectMeta.ResourceVersion = existing.ObjectMeta.ResourceVersion
+	svc.Spec.ClusterIP = existing.Spec.ClusterIP
+	return svc, false, nil
 }
 
 func getTargetPortForImage(imgName string) int {

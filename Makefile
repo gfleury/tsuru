@@ -7,7 +7,7 @@ TSR_BIN = $(BUILD_DIR)/tsurud
 TSR_SRC = ./cmd/tsurud
 TSR_PKGS = $$(go list ./... | grep -v /vendor/)
 
-.PHONY: all check-path test race docs install
+.PHONY: all check-path test race docs install tsurud $(TSR_BIN)
 
 all: check-path test
 
@@ -49,7 +49,8 @@ metalint:
 	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install $(TSR_PKGS)
 	go test -i $(TSR_PKGS)
-	golangci-lint run -c ./.golangci.yml
+	echo "$(TSR_PKGS)" | sed 's|github.com/tsuru/tsuru/|./|' | xargs -t -n 4 \
+		time golangci-lint run -c ./.golangci.yml
 
 race:
 	go test $(GO_EXTRAFLAGS) -race -i $(TSR_PKGS)
